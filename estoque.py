@@ -1,4 +1,4 @@
-"""Sistema de Controle de Estoque e Produção.
+
 
 import csv
 import sqlite3
@@ -10,20 +10,17 @@ from tkinter import filedialog, messagebox, ttk
 ARQUIVO_BANCO = Path(__file__).with_name("estoque.db")
 TIPOS_MOVIMENTO = ("Entrada", "Saída", "Produção")
 
-
-
-# Validação de dados
-
+                                                                            
+                    
+                                                                            
 class ErroValidacao(Exception):
-    """Dado inválido informado pelo usuário (a mensagem é exibida na tela)."""
-
+    pass
 
 def validar_texto(valor, campo, obrigatorio=True):
     valor = valor.strip()
     if obrigatorio and not valor:
         raise ErroValidacao(f"O campo '{campo}' é obrigatório.")
     return valor
-
 
 def validar_inteiro(valor, campo, minimo=0):
     try:
@@ -34,7 +31,6 @@ def validar_inteiro(valor, campo, minimo=0):
         raise ErroValidacao(f"O campo '{campo}' deve ser maior ou igual a {minimo}.")
     return numero
 
-
 def validar_preco(valor, campo="Preço"):
     try:
         numero = float(valor.strip().replace(",", "."))
@@ -44,18 +40,16 @@ def validar_preco(valor, campo="Preço"):
         raise ErroValidacao(f"O campo '{campo}' não pode ser negativo.")
     return round(numero, 2)
 
-
 def formatar_moeda(valor):
     texto = f"{valor:,.2f}"
     return "R$ " + texto.replace(",", "X").replace(".", ",").replace("X", ".")
 
-
 def formatar_data(texto_iso):
     return datetime.fromisoformat(texto_iso).strftime("%d/%m/%Y %H:%M")
 
-
-
-# Camada de dados (SQLite)
+                                                                            
+                          
+                                                                            
 class Banco:
 
     def __init__(self, caminho=ARQUIVO_BANCO):
@@ -93,7 +87,7 @@ class Banco:
                 """
             )
 
-    
+                                                                            
     def listar_produtos(self, busca=""):
         termo = f"%{busca.strip()}%"
         return self.conn.execute(
@@ -125,7 +119,7 @@ class Banco:
             raise ErroValidacao(f"Já existe um produto com o código '{codigo}'.") from None
 
     def atualizar_produto(self, produto_id, codigo, nome, categoria, minimo, preco, **_):
-        """Atualiza os dados cadastrais. A quantidade só muda por movimentação."""
+
         try:
             with self.conn:
                 self.conn.execute(
@@ -140,9 +134,9 @@ class Banco:
         with self.conn:
             self.conn.execute("DELETE FROM produtos WHERE id = ?", (produto_id,))
 
-    
+                                                                            
     def registrar_movimento(self, produto_id, tipo, quantidade, observacao=""):
-        """Registra a movimentação e atualiza o estoque na mesma transação."""
+
         if tipo not in TIPOS_MOVIMENTO:
             raise ErroValidacao("Tipo de movimentação inválido.")
         produto = self.buscar_produto(produto_id)
@@ -156,7 +150,7 @@ class Banco:
                     f"unidade(s) de '{produto['nome']}'."
                 )
             delta = -quantidade
-        else:  # Entrada e Produção aumentam o estoque
+        else:                                         
             delta = quantidade
 
         with self.conn:
@@ -179,13 +173,15 @@ class Banco:
             (limite,),
         ).fetchall()
 
-
+                                                                            
+                             
+                                                                            
 class App(tk.Tk):
     def __init__(self, banco):
         super().__init__()
         self.banco = banco
-        self.produto_selecionado = None   # id do produto carregado no formulário
-        self.mapa_produtos = {}           # texto do combobox -> id do produto
+        self.produto_selecionado = None                                          
+        self.mapa_produtos = {}                                               
 
         self.title("Controle de Estoque e Produção")
         self.geometry("1000x640")
@@ -206,10 +202,10 @@ class App(tk.Tk):
         self._montar_aba_alertas()
         self.atualizar_tudo()
 
-    
+                                                                           
     @staticmethod
     def _criar_tabela(pai, colunas, altura=12):
-        """Cria um Treeview com barra de rolagem. colunas = [(id, titulo, largura, alinhamento)]."""
+
         quadro = ttk.Frame(pai)
         tabela = ttk.Treeview(
             quadro, columns=[c[0] for c in colunas], show="headings", height=altura
@@ -224,7 +220,7 @@ class App(tk.Tk):
         tabela.tag_configure("baixo", background="#fde2e2")
         return quadro, tabela
 
-    
+                                                                             
     def _montar_aba_produtos(self):
         form = ttk.LabelFrame(self.aba_produtos, text="Dados do produto", padding=10)
         form.pack(fill="x", padx=10, pady=(10, 5))
@@ -270,7 +266,7 @@ class App(tk.Tk):
         self._atualizar_botoes()
 
     def _ler_formulario(self):
-        
+
         c = self.campos
         return {
             "codigo": validar_texto(c["codigo"].get(), "Código").upper(),
@@ -286,7 +282,7 @@ class App(tk.Tk):
         self.btn_cadastrar.state(["disabled"] if editando else ["!disabled"])
         self.btn_atualizar.state(["!disabled"] if editando else ["disabled"])
         self.btn_excluir.state(["!disabled"] if editando else ["disabled"])
-        # A quantidade só é editável no cadastro; depois, apenas por movimentação.
+                                                                                  
         self.campos["quantidade"].state(["disabled"] if editando else ["!disabled"])
 
     def cadastrar(self):
@@ -322,7 +318,7 @@ class App(tk.Tk):
     def limpar_formulario(self):
         self.produto_selecionado = None
         self.tabela_produtos.selection_remove(self.tabela_produtos.selection())
-        self._atualizar_botoes()  # reabilita o campo quantidade antes de limpar
+        self._atualizar_botoes()                                                
         for entrada in self.campos.values():
             entrada.delete(0, tk.END)
 
@@ -359,7 +355,7 @@ class App(tk.Tk):
         )
         if not caminho:
             return
-        # utf-8-sig + ";" para abrir corretamente no Excel em português
+                                                                       
         with open(caminho, "w", newline="", encoding="utf-8-sig") as arquivo:
             escritor = csv.writer(arquivo, delimiter=";")
             escritor.writerow(["Código", "Nome", "Categoria", "Quantidade", "Mínimo", "Preço"])
@@ -368,7 +364,7 @@ class App(tk.Tk):
                                    p["minimo"], f"{p['preco']:.2f}".replace(".", ",")])
         messagebox.showinfo("Exportação concluída", f"Arquivo salvo em:\n{caminho}")
 
-    
+                                                                             
     def _montar_aba_movimentos(self):
         form = ttk.LabelFrame(self.aba_movimentos, text="Nova movimentação", padding=10)
         form.pack(fill="x", padx=10, pady=10)
@@ -436,7 +432,7 @@ class App(tk.Tk):
                 m["tipo"], m["quantidade"], m["observacao"],
             ))
 
-    
+                                                                             
     def _montar_aba_alertas(self):
         self.rotulo_alertas = ttk.Label(self.aba_alertas, font=("TkDefaultFont", 11, "bold"))
         self.rotulo_alertas.pack(anchor="w", padx=12, pady=(12, 6))
@@ -461,7 +457,7 @@ class App(tk.Tk):
             text=f"{len(produtos)} produto(s) com estoque igual ou abaixo do mínimo"
         )
 
-    
+                                                                             
     def atualizar_tudo(self):
         self.atualizar_tabela_produtos()
         self.atualizar_tabela_movimentos()
@@ -472,17 +468,15 @@ class App(tk.Tk):
         if self.combo_produto.get() not in self.mapa_produtos:
             self.combo_produto.set("")
 
-        # Mantém o produto em edição sincronizado (ex.: depois de uma movimentação)
+                                                                                   
         if self.produto_selecionado is not None:
             if self.tabela_produtos.exists(str(self.produto_selecionado)):
                 self.tabela_produtos.selection_set(str(self.produto_selecionado))
             else:
                 self.limpar_formulario()
 
-
 def main():
     App(Banco()).mainloop()
-
 
 if __name__ == "__main__":
     main()
