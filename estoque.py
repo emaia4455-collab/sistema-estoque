@@ -1,17 +1,5 @@
 """Sistema de Controle de Estoque e Produção.
 
-Aplicação desktop em Python (Tkinter + SQLite) para:
-  * cadastrar, editar e excluir produtos;
-  * registrar entradas, saídas e produção (com histórico);
-  * alertar sobre produtos com estoque baixo;
-  * exportar o estoque para CSV (abre direto no Excel).
-
-Como executar:
-    python estoque.py
-
-Os dados ficam salvos no arquivo "estoque.db", na mesma pasta do programa.
-"""
-
 import csv
 import sqlite3
 import tkinter as tk
@@ -23,9 +11,9 @@ ARQUIVO_BANCO = Path(__file__).with_name("estoque.db")
 TIPOS_MOVIMENTO = ("Entrada", "Saída", "Produção")
 
 
-# --------------------------------------------------------------------------
+
 # Validação de dados
-# --------------------------------------------------------------------------
+
 class ErroValidacao(Exception):
     """Dado inválido informado pelo usuário (a mensagem é exibida na tela)."""
 
@@ -66,11 +54,9 @@ def formatar_data(texto_iso):
     return datetime.fromisoformat(texto_iso).strftime("%d/%m/%Y %H:%M")
 
 
-# --------------------------------------------------------------------------
+
 # Camada de dados (SQLite)
-# --------------------------------------------------------------------------
 class Banco:
-    """Acesso ao banco de dados. Não conhece nada sobre a interface gráfica."""
 
     def __init__(self, caminho=ARQUIVO_BANCO):
         self.conn = sqlite3.connect(caminho)
@@ -107,7 +93,7 @@ class Banco:
                 """
             )
 
-    # ---- produtos --------------------------------------------------------
+    
     def listar_produtos(self, busca=""):
         termo = f"%{busca.strip()}%"
         return self.conn.execute(
@@ -154,7 +140,7 @@ class Banco:
         with self.conn:
             self.conn.execute("DELETE FROM produtos WHERE id = ?", (produto_id,))
 
-    # ---- movimentações ---------------------------------------------------
+    
     def registrar_movimento(self, produto_id, tipo, quantidade, observacao=""):
         """Registra a movimentação e atualiza o estoque na mesma transação."""
         if tipo not in TIPOS_MOVIMENTO:
@@ -194,9 +180,6 @@ class Banco:
         ).fetchall()
 
 
-# --------------------------------------------------------------------------
-# Interface gráfica (Tkinter)
-# --------------------------------------------------------------------------
 class App(tk.Tk):
     def __init__(self, banco):
         super().__init__()
@@ -223,7 +206,7 @@ class App(tk.Tk):
         self._montar_aba_alertas()
         self.atualizar_tudo()
 
-    # ---- utilitários de layout ------------------------------------------
+    
     @staticmethod
     def _criar_tabela(pai, colunas, altura=12):
         """Cria um Treeview com barra de rolagem. colunas = [(id, titulo, largura, alinhamento)]."""
@@ -241,7 +224,7 @@ class App(tk.Tk):
         tabela.tag_configure("baixo", background="#fde2e2")
         return quadro, tabela
 
-    # ---- aba Produtos -----------------------------------------------------
+    
     def _montar_aba_produtos(self):
         form = ttk.LabelFrame(self.aba_produtos, text="Dados do produto", padding=10)
         form.pack(fill="x", padx=10, pady=(10, 5))
@@ -287,7 +270,7 @@ class App(tk.Tk):
         self._atualizar_botoes()
 
     def _ler_formulario(self):
-        """Lê e valida os campos. Lança ErroValidacao se algo estiver errado."""
+        
         c = self.campos
         return {
             "codigo": validar_texto(c["codigo"].get(), "Código").upper(),
@@ -385,7 +368,7 @@ class App(tk.Tk):
                                    p["minimo"], f"{p['preco']:.2f}".replace(".", ",")])
         messagebox.showinfo("Exportação concluída", f"Arquivo salvo em:\n{caminho}")
 
-    # ---- aba Movimentações ------------------------------------------------
+    
     def _montar_aba_movimentos(self):
         form = ttk.LabelFrame(self.aba_movimentos, text="Nova movimentação", padding=10)
         form.pack(fill="x", padx=10, pady=10)
@@ -453,7 +436,7 @@ class App(tk.Tk):
                 m["tipo"], m["quantidade"], m["observacao"],
             ))
 
-    # ---- aba Estoque baixo ------------------------------------------------
+    
     def _montar_aba_alertas(self):
         self.rotulo_alertas = ttk.Label(self.aba_alertas, font=("TkDefaultFont", 11, "bold"))
         self.rotulo_alertas.pack(anchor="w", padx=12, pady=(12, 6))
@@ -478,7 +461,7 @@ class App(tk.Tk):
             text=f"{len(produtos)} produto(s) com estoque igual ou abaixo do mínimo"
         )
 
-    # ---- atualização geral ------------------------------------------------
+    
     def atualizar_tudo(self):
         self.atualizar_tabela_produtos()
         self.atualizar_tabela_movimentos()
